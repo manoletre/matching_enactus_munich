@@ -1,0 +1,5 @@
+#binaries
+__pycache__
+
+#editor files
+.vscode
