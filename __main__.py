@@ -1,27 +1,29 @@
 import sys
+import json
 from matching.games import HospitalResident
 from reader import Reader
 
 operation = sys.argv[1]
 
-r = Reader("./matching.xlsx")
+# insert path of excel below
+r = Reader("./Bewerber - Projekt Matching(1-13).xlsx")
 
-hackers = None
-challenge_prefs = None
+doctors = None
+hospital_prefs = None
 
 if (operation == "candidates"):
-    hackers = r.read_hackers()
+    doctors = r.read_doctors()
 
-    r.write_candidates(hackers)
+    r.write_candidates(doctors)
 
 elif (operation == "matching"):
-    hackers = r.read_hackers()
-    challenge_prefs = r.read_challenge_prefs()
+    doctors = r.read_doctors()
+    hospital_prefs = r.read_hospital_prefs()
 
-    capacities = {chal: 3 for chal in challenge_prefs}
+    capacities = r.read_hospital_capacities()
 
     game = HospitalResident.create_from_dictionaries(
-        hackers, challenge_prefs, capacities
+        doctors, hospital_prefs, capacities
     )
     result = game.solve()
 
