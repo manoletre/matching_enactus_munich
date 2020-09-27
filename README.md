@@ -1,6 +1,6 @@
 # Enactus Munich Project - Applicant Matching software
 
-If you want to learn more about Enactus Munich please head to [our website](http://muenchen.enactus.de/)
+If you want to learn more about Enactus Munich please head to [our website](https://enactus-muenchen.de/)
 
 # Installation:
 1. Make sure you have [Python3](https://www.python.org/downloads/), [Pipenv](https://github.com/pypa/pipenv) and Excel installed in your pc.
