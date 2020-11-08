@@ -1,48 +1,39 @@
+""" main document, handles IO and runs the actual matching algorithm 
+to read candidates use argument "candidates"
+to create the list of candidates use argument "candidateList"
+to let the matching happen use argument "matching"
+"""
+
 import sys
-import json
+import pandas as pd
 from matching.games import HospitalResident
 from reader import Reader
 
 operation = sys.argv[1]
 
-# insert path of excel below
-r = Reader("./Prios der Challenges für das Projekthackathon(1-2).xlsx")
+# insert path of doctors excel below
+r = Reader("Projektprioritäten für Interviewzuteilung am Samstag.xlsx")
 
-doctors = None
-hospital_prefs = None
+DOCTORS = None
+HOSPITAL_PREFS = None
 
-if (operation == "candidates"):
-    doctors = r.read_doctors()
+if operation == "candidates":
+	""" reads doctors excel and writes new excel with candidates per hospital """
 
-    r.write_candidates(doctors)
-
-
-elif (operation == "candidateList"):
-    hospital_prefs = r.read_hospital_prefs()
-    toPrint = set()
-    for h in hospital_prefs:
-        for c in hospital_prefs[h]:
-            toPrint.add(c)
-
-    toPrint = sorted(toPrint)
-
-    print()
-    print("----------")
-    for c in toPrint:
-        print(c)
-    print("----------")
-    print()
+	r.read_doctors()
 
 
-elif (operation == "matching"):
-    doctors = r.read_doctors()
-    hospital_prefs = r.read_hospital_prefs()
+elif operation == "matching":
+	DOCTORS = r.read_doctors()
+	HOSPITAL_PREFS = r.read_hospital_prefs()
 
-    capacities = r.read_hospital_capacities()
+	capacities = r.read_hospital_capacities()
 
-    game = HospitalResident.create_from_dictionaries(
-        doctors, hospital_prefs, capacities
-    )
-    result = game.solve()
+	game = HospitalResident.create_from_dictionaries(
+		DOCTORS, HOSPITAL_PREFS, capacities
+	)
+	result = game.solve()
 
-    print(result)
+	turned = r.turn_dict(result)
+	df_result = pd.DataFrame(turned, index=[0]).T
+	df_result.to_excel("matching_result.xlsx")

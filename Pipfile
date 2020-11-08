@@ -11,6 +11,7 @@ matching = "*"
 pandas = "*"
 xlrd = "*"
 xlsxwriter = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.8"

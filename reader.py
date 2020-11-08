@@ -1,84 +1,90 @@
-import pandas as pd
-import xlsxwriter as xw
+""" This document defines the functionality to read data from the excel files """
+
 from math import isnan
 
-class Reader(object):
-    def __init__(self, path):
-        self.path = path
+import pandas as pd
+import xlsxwriter as xw
+
+class Reader():
+	"""The Reader class receives the path of the excel to be read and
+	defines contains the functionality to read and process data from excel
+	"""
+
+	def __init__(self, path):
+		self.path = path
 
 
-    def read_doctors(self):
-        doctors = pd.read_excel(self.path, "Sheet1")
-        doctors.drop(doctors.columns[[0,1,2,3,4]], axis=1, inplace=True)
+	def clean(self, dict_with_nan):
+		""" cleans dictionary for it to not contain NaN values """
 
-        # trim columns
-        doctors = doctors.apply(lambda x: x.str.strip())
+		clean = {}
+		for key in dict_with_nan:
+			clean[key] = [h for h in dict_with_nan[key] if type(h) is str or not isnan(h)]
 
-        doctors["Name"] = doctors["Name"] + " " + doctors["Nachname"]
-        doctors = doctors.drop(columns=["Nachname"])
-        
-        doctors_dict = doctors.set_index("Name").T.to_dict("list")
-            
-        return self.clean(doctors_dict)
+		return clean
 
 
-    def write_candidates(self, doctors_dict):
-        hospitals = pd.read_excel("hospitals.xlsx", "Sheet1").to_dict("list")["Name"]
+	def read_doctors(self):
+		"""doctors are read from the provided path. This function
+		takes care of some of the formating.
+		"""
 
-        candidates = {c : [] for c in hospitals}
+		doctors = pd.read_excel(self.path, "Sheet1")
+		doctors.drop(doctors.columns[[0,1,2,3]], axis=1, inplace=True)
 
-        for h in doctors_dict:
-            for c in doctors_dict[h]:
-                candidates[c].append(h)
+		doctors = doctors.apply(lambda x: x.str.strip())
 
-        self.write_dict_to_excel("candidates", candidates)
-        
+		doctors["Vorname"] = doctors["Vorname"] + " " + doctors["Nachname"]
+		doctors.drop(columns=["Nachname"], axis=1, inplace=True)
 
-    def read_hospital_capacities(self):
-        hospital_dict = pd.read_excel("hospitals.xlsx", "Sheet1").to_dict("list")
-        names = hospital_dict["Name"]
-        capacities = hospital_dict["Capacities"]
+		hospitals = pd.read_excel("hospitals.xlsx")["Name"].apply(lambda x: x.strip())
+		hospital_dfs = []
+		for hospital in hospitals:
+			hospital = hospital.strip()
+			hospital_overview = []
+			for index, row in doctors.iterrows():
+				for i, prio in enumerate(list(row[1:])):
+					if prio == hospital:
+						current = {}
+						current["Vorname"] = row["Vorname"]
+						current["Prio"] = "Prio {}".format(i+1)
+						hospital_overview.append(current)
+			hospital_dfs.append(pd.DataFrame(hospital_overview))
 
-        capacity_dict = {}
-        for i in range(0, len(names)):
-            capacity_dict[names[i]] = capacities[i]
+		writer = pd.ExcelWriter("candidates.xlsx", engine="xlsxwriter")
+		for i, hospital_df in enumerate(hospital_dfs):
+			hospital_df.to_excel(writer, sheet_name=hospitals[i])
+		writer.save()
 
-        return capacity_dict
-
-
-    def read_hospital_prefs(self):
-        hospital_prefs = pd.read_excel("candidates.xlsx")
-
-        hospital_prefs = hospital_prefs.apply(lambda x: x.str.strip())
-
-        return self.clean(hospital_prefs.to_dict("list"))
+		doctors_dict = doctors.set_index("Vorname").T.to_dict("list")
+		return self.clean(doctors_dict)
 
 
-    def clean(self, dict_with_nan):
-        clean = {}
-        for c in dict_with_nan:
-            clean[c] = [h for h in dict_with_nan[c] if type(h) is str or not isnan(h)]
-            
-        return clean
+	def read_hospital_capacities(self):
+		hospital_dict = pd.read_excel("hospitals.xlsx")
+		names = hospital_dict["Vorname"].apply(lambda x: x.strip())
+		capacities = hospital_dict["Capacities"]
 
-    
-    def write_dict_to_excel(self, workbook_name, dict_to_write):
-        wb = xw.Workbook("./" + workbook_name + ".xlsx")
-        ws = wb.add_worksheet()
+		capacity_dict = {}
+		for i in range(0, len(names)):
+			capacity_dict[names[i]] = capacities[i]
 
-        #write headers
-        col = 0
-        for c in dict_to_write:
-            ws.write_string(0, col, c)
-            col += 1
+		return capacity_dict
 
-        #write candidate per hospital
-        col = 0
-        for c in dict_to_write:
-            row = 1
-            for h in dict_to_write[c]:
-                ws.write_string(row, col, h)
-                row += 1
-            col += 1
 
-        wb.close()
+	def read_hospital_prefs(self):
+		hospitals = pd.read_excel("hospitals.xlsx")["Vorname"].apply(lambda x: x.strip())
+		dict_hospital_prefs = {}
+		for hospital in hospitals:
+			hospital_prefs = pd.read_excel("candidates.xlsx", sheet_name=hospital)["Name"]
+			hospital_prefs = hospital_prefs.apply(lambda x: x.strip())
+			dict_hospital_prefs[hospital] = list(hospital_prefs)
+
+		return self.clean(dict_hospital_prefs)
+
+	def turn_dict(self, d):
+		new_d = {}
+		for key in d:	
+			for v in d[key]:
+				new_d[v] = key
+		return new_d
