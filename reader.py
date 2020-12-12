@@ -32,7 +32,7 @@ class Reader():
 		doctors = pd.read_excel(self.path, "Sheet1")
 		doctors.drop(doctors.columns[[0,1,2,3]], axis=1, inplace=True)
 
-		doctors = doctors.apply(lambda x: x.str.strip())
+		#doctors = doctors.apply(lambda x: str(x).strip())
 
 		doctors["Vorname"] = doctors["Vorname"] + " " + doctors["Nachname"]
 		doctors.drop(columns=["Nachname"], axis=1, inplace=True)
@@ -47,14 +47,14 @@ class Reader():
 					if prio == hospital:
 						current = {}
 						current["Vorname"] = row["Vorname"]
-						current["Prio"] = "Prio {}".format(i+1)
+						current["Prio"] = "Prio {}".format(i)
 						hospital_overview.append(current)
 			hospital_dfs.append(pd.DataFrame(hospital_overview))
 
-		writer = pd.ExcelWriter("candidates.xlsx", engine="xlsxwriter")
-		for i, hospital_df in enumerate(hospital_dfs):
-			hospital_df.to_excel(writer, sheet_name=hospitals[i])
-		writer.save()
+		#writer = pd.ExcelWriter("candidates.xlsx", engine="xlsxwriter")
+		#for i, hospital_df in enumerate(hospital_dfs):
+	#		hospital_df.to_excel(writer, sheet_name=hospitals[i])
+	#	writer.save()
 
 		doctors_dict = doctors.set_index("Vorname").T.to_dict("list")
 		return self.clean(doctors_dict)
@@ -62,7 +62,7 @@ class Reader():
 
 	def read_hospital_capacities(self):
 		hospital_dict = pd.read_excel("hospitals.xlsx")
-		names = hospital_dict["Vorname"].apply(lambda x: x.strip())
+		names = hospital_dict["Name"].apply(lambda x: x.strip())
 		capacities = hospital_dict["Capacities"]
 
 		capacity_dict = {}
@@ -73,10 +73,10 @@ class Reader():
 
 
 	def read_hospital_prefs(self):
-		hospitals = pd.read_excel("hospitals.xlsx")["Vorname"].apply(lambda x: x.strip())
+		hospitals = pd.read_excel("hospitals.xlsx")["Name"].apply(lambda x: x.strip())
 		dict_hospital_prefs = {}
 		for hospital in hospitals:
-			hospital_prefs = pd.read_excel("candidates.xlsx", sheet_name=hospital)["Name"]
+			hospital_prefs = pd.read_excel("candidates.xlsx", sheet_name=hospital)["Vorname"]
 			hospital_prefs = hospital_prefs.apply(lambda x: x.strip())
 			dict_hospital_prefs[hospital] = list(hospital_prefs)
 

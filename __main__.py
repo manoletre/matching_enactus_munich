@@ -12,7 +12,7 @@ from reader import Reader
 operation = sys.argv[1]
 
 # insert path of doctors excel below
-r = Reader("Projektprioritäten für Interviewzuteilung am Samstag.xlsx")
+r = Reader("Projektprioritäten für Challengezuteilung(1-60).xlsx")
 
 DOCTORS = None
 HOSPITAL_PREFS = None
